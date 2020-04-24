@@ -12,13 +12,29 @@ def homepage(ark):
 
     logger.info('Homepage handling request %s', request)
 
-    if eg_exists(ark):
+    try:
+        exists, eg_id = eg_exists(ark)
+    except:
+        logger.error('Ark does not exists')
+        return jsonify({'error':'Given ark does not exist.'}),503
+
+    if exists:
         logger.info('Request for existing evidence graph: %s', ark)
-        return existing_eg(ark)
+        return existing_eg(eg_id)
 
     logger.info('Creating Evidence Graph for %s', ark)
-    eg = create_eg(ark)
-    id = mint_eg_id(ark)
-    add_eg_to_og_id(ark,eg)
 
+    try:
+        eg = create_eg(ark)
+    except:
+        logger.error('Failed to create eg for ark: %s',ark)
+        return jsonify('error':'Server failed to create evidence graph.'),503
+
+    try:
+        eg_id = mint_eg_id(eg)
+        add_eg_to_og_id(ark,eg)
+    except:
+        logger.error('Minting evidence graph failed.')
+        return eg
+        
     return eg
